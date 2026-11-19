@@ -1,0 +1,26 @@
+// Konfigurasi Cloudflare Workers — RESERV DTPHP
+// Dokumentasi: https://opennext.js/cloudflare
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "reserv-dtphp",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Database D1 — buat dulu dengan:
+  //   npx wrangler d1 create reserv-dtphp-db
+  // lalu ganti database_id dengan ID yang diberikan.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "reserv-dtphp-db",
+      "database_id": "GANTI_DENGAN_ID_D1_ANDA"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
