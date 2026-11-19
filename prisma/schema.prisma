@@ -1,0 +1,61 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  accessCode   String        @unique
+  role         String        @default("USER") // ADMIN | USER
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
+}
+
+model Room {
+  id           String        @id @default(cuid())
+  name         String
+  location     String?
+  capacity     Int           @default(10)
+  facilities   String? // dipisah koma, contoh: Proyektor, AC, Whiteboard
+  color        String        @default("#16a34a")
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  reservations Reservation[]
+}
+
+model Reservation {
+  id          String    @id @default(cuid())
+  title       String
+  agenda      String?
+  roomId      String
+  room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        String // YYYY-MM-DD
+  startTime   String // HH:MM
+  endTime     String // HH:MM
+  status      String    @default("PENDING") // PENDING | APPROVED | ONGOING | COMPLETED | REJECTED | CANCELLED
+  actualStart DateTime?
+  actualEnd   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([roomId, date])
+  @@index([userId, date])
+}
+
+model Settings {
+  id           String  @id @default("main")
+  openHour     Int     @default(7) // jam buka, contoh 7 = 07:00
+  closeHour    Int     @default(18) // jam tutup, contoh 18 = 18:00
+  autoApprove  Boolean @default(false)
+  maxDaysAhead Int     @default(30)
+}
