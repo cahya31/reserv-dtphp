@@ -51,6 +51,7 @@ export function AdminPengguna({ me }: { me: SessionUser }) {
   const [loading, setLoading] = React.useState(true)
   const [addOpen, setAddOpen] = React.useState(false)
   const [editTarget, setEditTarget] = React.useState<UserRow | null>(null)
+  const [renameTarget, setRenameTarget] = React.useState<UserRow | null>(null)
   const [deleteTarget, setDeleteTarget] = React.useState<UserRow | null>(null)
   const [busyId, setBusyId] = React.useState<string | null>(null)
 
@@ -172,9 +173,17 @@ export function AdminPengguna({ me }: { me: SessionUser }) {
                           size="sm"
                           variant="outline"
                           className="h-8 gap-1.5"
+                          onClick={() => setRenameTarget(u)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> Ubah Nama
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 gap-1.5"
                           onClick={() => setEditTarget(u)}
                         >
-                          <Pencil className="h-3.5 w-3.5" /> Edit
+                          Edit
                         </Button>
                         {u.accessCode !== '01' && (
                           <Button
@@ -240,6 +249,15 @@ export function AdminPengguna({ me }: { me: SessionUser }) {
         onClose={() => setAddOpen(false)}
         onCreated={() => {
           setAddOpen(false)
+          load()
+        }}
+      />
+
+      <RenameUserDialog
+        target={renameTarget}
+        onClose={() => setRenameTarget(null)}
+        onSaved={() => {
+          setRenameTarget(null)
           load()
         }}
       />
@@ -447,6 +465,77 @@ function EditUserDialog({
           >
             {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
             Simpan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+
+function RenameUserDialog({
+  target,
+  onClose,
+  onSaved,
+}: {
+  target: UserRow | null
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [name, setName] = React.useState('')
+  const [saving, setSaving] = React.useState(false)
+
+  React.useEffect(() => {
+    if (target) setName(target.name)
+  }, [target])
+
+  const save = async () => {
+    if (!target || !name.trim()) return
+    setSaving(true)
+    try {
+      await api(`/api/users/${target.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ name: name.trim() }),
+      })
+      toast.success(`Nama pengguna berhasil diubah. Kode akses ${target.accessCode} tetap.`)
+      onSaved()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Gagal mengubah nama pengguna.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open={!!target} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="bg-[#fffdf4] sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Ubah Nama Pengguna</DialogTitle>
+          <DialogDescription>
+            Kode akses {target?.accessCode} tidak akan berubah.
+          </DialogDescription>
+        </DialogHeader>
+        <div>
+          <Label htmlFor="rename-user-name">Nama Pengguna Baru</Label>
+          <Input
+            id="rename-user-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && name.trim() && save()}
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Batal
+          </Button>
+          <Button
+            onClick={save}
+            disabled={saving || !name.trim() || name.trim() === target?.name}
+            className="bg-emerald-700 hover:bg-emerald-600"
+          >
+            {saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+            Simpan Nama
           </Button>
         </DialogFooter>
       </DialogContent>
